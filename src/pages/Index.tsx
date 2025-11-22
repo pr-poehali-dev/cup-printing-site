@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
@@ -50,6 +52,14 @@ export default function Index() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customText, setCustomText] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
+  const [orderForm, setOrderForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+    comment: ''
+  });
   const { toast } = useToast();
 
   const addToCart = (product: Product, text?: string) => {
@@ -86,6 +96,26 @@ export default function Index() {
   };
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const handleOrderSubmit = () => {
+    if (!orderForm.name || !orderForm.phone || !orderForm.address) {
+      toast({
+        title: '⚠️ Заполните обязательные поля',
+        description: 'Укажите ФИО, телефон и адрес доставки',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    toast({
+      title: '🎉 Заказ оформлен!',
+      description: `Спасибо, ${orderForm.name}! Мы свяжемся с вами в ближайшее время.`,
+    });
+
+    setCart([]);
+    setOrderForm({ name: '', phone: '', email: '', address: '', comment: '' });
+    setIsOrderDialogOpen(false);
+  };
 
   return (
     <div className="min-h-screen">
@@ -168,7 +198,11 @@ export default function Index() {
                         <span>Итого:</span>
                         <span className="text-primary">{totalPrice} ₽</span>
                       </div>
-                      <Button size="lg" className="w-full animate-bounce-in bg-primary hover:bg-primary/90">
+                      <Button 
+                        size="lg" 
+                        className="w-full animate-bounce-in bg-primary hover:bg-primary/90"
+                        onClick={() => setIsOrderDialogOpen(true)}
+                      >
                         Оформить заказ
                         <Icon name="ArrowRight" size={20} className="ml-2" />
                       </Button>
@@ -445,6 +479,86 @@ export default function Index() {
           <p className="text-sm opacity-75">© 2024 Все права защищены</p>
         </div>
       </footer>
+
+      <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Оформление заказа</DialogTitle>
+            <DialogDescription>
+              Заполните данные для доставки вашего заказа
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">ФИО <span className="text-destructive">*</span></Label>
+              <Input
+                id="name"
+                placeholder="Иванов Иван Иванович"
+                value={orderForm.name}
+                onChange={(e) => setOrderForm({ ...orderForm, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Телефон <span className="text-destructive">*</span></Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+7 (900) 123-45-67"
+                value={orderForm.phone}
+                onChange={(e) => setOrderForm({ ...orderForm, phone: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="example@mail.ru"
+                value={orderForm.email}
+                onChange={(e) => setOrderForm({ ...orderForm, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="address">Адрес доставки <span className="text-destructive">*</span></Label>
+              <Textarea
+                id="address"
+                placeholder="Город, улица, дом, квартира"
+                value={orderForm.address}
+                onChange={(e) => setOrderForm({ ...orderForm, address: e.target.value })}
+                className="min-h-20"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="comment">Комментарий к заказу</Label>
+              <Textarea
+                id="comment"
+                placeholder="Уточнения по заказу или доставке"
+                value={orderForm.comment}
+                onChange={(e) => setOrderForm({ ...orderForm, comment: e.target.value })}
+                className="min-h-20"
+              />
+            </div>
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-semibold">Товаров в заказе:</span>
+                <span className="text-lg">{cart.reduce((sum, item) => sum + item.quantity, 0)} шт.</span>
+              </div>
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-2xl font-bold">Итого:</span>
+                <span className="text-2xl font-bold text-primary">{totalPrice} ₽</span>
+              </div>
+              <Button 
+                size="lg" 
+                className="w-full bg-primary hover:bg-primary/90"
+                onClick={handleOrderSubmit}
+              >
+                Подтвердить заказ
+                <Icon name="Check" size={20} className="ml-2" />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
